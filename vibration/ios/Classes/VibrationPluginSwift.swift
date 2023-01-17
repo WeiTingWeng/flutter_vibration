@@ -12,6 +12,8 @@ public class VibrationPluginSwift: NSObject, FlutterPlugin {
     
     @available(iOS 13.0, *)
     public static var engine: CHHapticEngine?
+    @available(iOS 13.0, *)
+    public static var player: CHHapticPatternPlayer?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "vibration", binaryMessenger: registrar.messenger())
@@ -105,9 +107,9 @@ public class VibrationPluginSwift: NSObject, FlutterPlugin {
         do {
             if let engine = VibrationPluginSwift.engine {
                 let patternToPlay = try CHHapticPattern(events: hapticEvents, parameters: [])
-                let player = try engine.makePlayer(with: patternToPlay)
+                VibrationPluginSwift.player = try engine.makePlayer(with: patternToPlay)
                 try engine.start()
-                try player.start(atTime: 0)
+                try VibrationPluginSwift.player?.start(atTime: 0)
             }
         } catch {
             print("Failed to play pattern: \(error.localizedDescription).")
@@ -160,6 +162,15 @@ public class VibrationPluginSwift: NSObject, FlutterPlugin {
             
             result(isDevice)
         case "cancel":
+            if #available(iOS 13.0, *) {
+                if VibrationPluginSwift.player != nil {
+                    do {
+                        try VibrationPluginSwift.player?.cancel()
+                    } catch {
+                        print("Failed to cancel the player: \(error)")
+                    }
+                }
+            }
             result(nil)
         default:
             result(FlutterMethodNotImplemented)
